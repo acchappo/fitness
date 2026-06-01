@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Training Schedule</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    padding: 2rem;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 13px; color: #888780; margin-bottom: 1.75rem; }
+
+  /* ── Nav tabs ── */
+  .main-nav { display: flex; gap: 4px; margin-bottom: 1.75rem; border-bottom: 0.5px solid #d3d1c7; padding-bottom: 0; }
+  .nav-btn {
+    padding: 8px 16px; border: none; background: none; font-family: inherit;
+    font-size: 14px; color: #888780; cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all 0.15s;
+  }
+  .nav-btn:hover { color: #1a1a18; }
+  .nav-btn.active { color: #1a1a18; border-bottom-color: #1a1a18; font-weight: 500; }
+
+  /* ── Main panels ── */
+  .main-panel { display: none; }
+  .main-panel.visible { display: block; }
+
+  /* ── Week toggle ── */
+  .week-toggle { display: flex; gap: 8px; margin-bottom: 1.5rem; }
+  .wk-btn {
+    padding: 8px 18px; border-radius: 8px; border: 0.5px solid #b4b2a9;
+    background: #fff; color: #5f5e5a; font-size: 13px; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .wk-btn.active { background: #f1efe8; color: #1a1a18; border-color: #888780; font-weight: 500; }
+  .wk-btn:hover:not(.active) { background: #f9f8f5; }
+
+  /* ── Day grid ── */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 2rem; }
+  @media (max-width: 800px) { .week-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 480px) { .week-grid { grid-template-columns: repeat(2, 1fr); } body { padding: 1rem; } }
+
+  .day-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 10px; min-height: 130px; }
+  .day-label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #888780; margin-bottom: 6px; }
+  .loc-badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; margin-bottom: 8px; font-weight: 500; }
+  .loc-office { background: #e6f1fb; color: #0c447c; }
+  .loc-home   { background: #eaf3de; color: #27500a; }
+  .loc-rest   { background: #f1efe8; color: #5f5e5a; }
+
+  .activity { display: flex; align-items: center; gap: 5px; font-size: 12px; margin-bottom: 4px; }
+  .activity svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .activity.bike     { color: #185fa5; }
+  .activity.swim     { color: #0f6e56; }
+  .activity.strength { color: #534ab7; }
+  .activity.netball  { color: #993c1d; }
+  .activity.rest     { color: #888780; }
+  .day-note { font-size: 11px; color: #b4b2a9; margin-top: 6px; font-style: italic; }
+
+  /* ── Section label ── */
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #888780; margin-bottom: 12px; }
+
+  /* ── Session cards ── */
+  .sessions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .session-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; overflow: hidden; }
+  .session-header { padding: 14px 16px 10px; border-bottom: 0.5px solid #d3d1c7; }
+  .session-week-label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .wka-wed  { color: #534ab7; }
+  .wka-fri  { color: #0f6e56; }
+  .wkb-wed  { color: #993c1d; }
+  .swim-col { color: #0f6e56; }
+  .session-title { font-size: 17px; font-weight: 500; color: #1a1a18; margin: 0 0 3px; }
+  .session-meta  { font-size: 12px; color: #b4b2a9; }
+
+  /* ── Strength table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  thead th { font-size: 11px; font-weight: 500; text-align: left; color: #888780; letter-spacing: 0.04em; text-transform: uppercase; padding: 8px 16px 6px; border-bottom: 0.5px solid #d3d1c7; }
+  thead th:not(:first-child) { text-align: center; }
+  tbody tr { border-bottom: 0.5px solid #eeedeb; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 9px 16px; vertical-align: middle; color: #1a1a18; }
+  tbody td:not(:first-child) { text-align: center; color: #5f5e5a; }
+  .ex-name { font-weight: 500; font-size: 13px; display: block; }
+  .ex-cue  { font-size: 11px; color: #b4b2a9; display: block; margin-top: 2px; }
+  .add-badge { display: inline-block; font-size: 11px; background: #eeedfe; color: #3c3489; border-radius: 4px; padding: 1px 6px; font-weight: 500; }
+  .add-badge.later { background: #f1efe8; color: #5f5e5a; }
+
+  /* ── Prog note ── */
+  .prog-note { padding: 12px 16px; background: #f9f8f5; border-top: 0.5px solid #d3d1c7; font-size: 12px; color: #5f5e5a; line-height: 1.6; }
+  .prog-note strong { font-weight: 500; color: #1a1a18; }
+
+  /* ── Swim sessions ── */
+  .swim-block { padding: 10px 16px; border-bottom: 0.5px solid #eeedeb; }
+  .swim-block:last-child { border-bottom: none; }
+  .swim-block-title { font-size: 12px; font-weight: 600; color: #1a1a18; margin-bottom: 2px; }
+  .swim-block-meta  { font-size: 11px; color: #b4b2a9; margin-bottom: 6px; }
+  .swim-set { display: flex; align-items: baseline; gap: 7px; font-size: 12.5px; color: #3a3a38; margin-bottom: 3px; }
+  .swim-dot { width: 5px; height: 5px; border-radius: 50%; background: #0f6e56; flex-shrink: 0; margin-top: 5px; }
+  .swim-note { font-size: 11px; color: #888780; margin-top: 6px; font-style: italic; line-height: 1.5; }
+
+  /* ── Week panel ── */
+  .week-panel { display: none; }
+  .week-panel.visible { display: block; }
+
+  /* ── Mobility ── */
+  .mob-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .mob-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; overflow: hidden; }
+  .mob-header { padding: 12px 14px 10px; border-bottom: 0.5px solid #d3d1c7; display: flex; align-items: center; gap: 10px; }
+  .mob-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .mob-icon.morning   { background: #FAEEDA; color: #633806; }
+  .mob-icon.postcycle { background: #E1F5EE; color: #085041; }
+  .mob-icon.preeve    { background: #e6f1fb; color: #0c447c; }
+  .mob-icon.homeeve   { background: #EEEDFE; color: #3C3489; }
+  .mob-icon.strength  { background: #FAECE7; color: #712B13; }
+  .mob-icon.desk      { background: #EAF3DE; color: #27500A; }
+  .mob-title { font-size: 13px; font-weight: 500; color: #1a1a18; line-height: 1.3; }
+  .mob-meta  { font-size: 11px; color: #b4b2a9; margin-top: 2px; }
+  .mob-item { display: flex; gap: 10px; padding: 7px 14px; border-bottom: 0.5px solid #eeedeb; align-items: flex-start; }
+  .mob-item:last-child { border-bottom: none; }
+  .mob-num { font-size: 11px; font-weight: 500; color: #b4b2a9; min-width: 16px; padding-top: 2px; }
+  .mob-body { flex: 1; }
+  .mob-name { font-size: 13px; font-weight: 500; color: #1a1a18; }
+  .mob-detail { font-size: 11.5px; color: #5f5e5a; margin-top: 2px; line-height: 1.5; }
+  .mob-time { font-size: 11px; color: #888780; white-space: nowrap; padding-top: 2px; }
+  .mob-divider { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: #888780; padding: 6px 14px 4px; background: #f9f8f5; border-bottom: 0.5px solid #eeedeb; }
+  .mob-note { font-size: 11.5px; color: #5f5e5a; background: #f9f8f5; padding: 8px 14px; border-top: 0.5px solid #d3d1c7; font-style: italic; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>Training plan</h1>
+<p class="subtitle">Personal fitness plan — Week A &amp; B rotation</p>
+
+<nav class="main-nav">
+  <button class="nav-btn active" onclick="showMain('schedule', this)">Schedule</button>
+  <button class="nav-btn" onclick="showMain('mobility', this)">Mobility &amp; stretching</button>
+</nav>
+
+<!-- SVG icons -->
+<svg style="display:none">
+  <symbol id="ic-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="M12 17l2-5h3M9 17h6M5 17l4-9h4l2 4"/></symbol>
+  <symbol id="ic-swim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><circle cx="12" cy="7" r="2"/></symbol>
+  <symbol id="ic-str" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4v6M18 4v6M2 7h4M18 7h4M6 7h12"/></symbol>
+  <symbol id="ic-net" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3c2 4 2 14 0 18M3 12c4-2 14-2 18 0"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></symbol>
+</svg>
+
+<!-- ═══════════════════ SCHEDULE PANEL ═══════════════════ -->
+<div id="main-schedule" class="main-panel visible">
+
+  <div class="week-toggle">
+    <button class="wk-btn active" onclick="showWeek('a', this)">Week A — 3 office days</button>
+    <button class="wk-btn" onclick="showWeek('b', this)">Week B — 4 office days</button>
+  </div>
+
+  <!-- WEEK A -->
+  <div id="panel-a" class="week-panel visible">
+    <div class="week-grid">
+      <div class="day-card"><div class="day-label">Mon</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity swim"><svg><use href="#ic-swim"/></svg>Swim</div><div class="day-note">Lunch swim</div></div>
+      <div class="day-card"><div class="day-label">Tue</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity rest"><svg><use href="#ic-moon"/></svg>Rest eve</div><div class="day-note">Legs loading</div></div>
+      <div class="day-card"><div class="day-label">Wed</div><span class="loc-badge loc-home">home</span><div class="activity strength"><svg><use href="#ic-str"/></svg>Strength A</div><div class="day-note">Lower body</div></div>
+      <div class="day-card"><div class="day-label">Thu</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity netball"><svg><use href="#ic-net"/></svg>Netball</div><div class="day-note">Big day</div></div>
+      <div class="day-card"><div class="day-label">Fri</div><span class="loc-badge loc-home">home</span><div class="activity strength"><svg><use href="#ic-str"/></svg>Strength B</div><div class="activity swim"><svg><use href="#ic-swim"/></svg>Swim</div><div class="day-note">Upper + swim</div></div>
+      <div class="day-card"><div class="day-label">Sat</div><span class="loc-badge loc-rest">rest</span><div class="activity rest"><svg><use href="#ic-moon"/></svg>Full recovery</div></div>
+      <div class="day-card"><div class="day-label">Sun</div><span class="loc-badge loc-rest">rest</span><div class="activity swim"><svg><use href="#ic-swim"/></svg>Opt. swim</div><div class="day-note">Easy prep</div></div>
+    </div>
+
+    <div class="section-label">Strength sessions</div>
+    <div class="sessions-grid">
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label wka-wed">Week A — Wednesday</div><div class="session-title">Strength A — lower body</div><div class="session-meta">~50 mins · at home</div></div>
+        <table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Add when ready</th></tr></thead><tbody>
+          <tr><td><span class="ex-name">Back squat</span><span class="ex-cue">Full depth, bar on traps</span></td><td>4 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Romanian deadlift</span><span class="ex-cue">Hinge at hips, soft knees</span></td><td>3 × 10</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Reverse lunge</span><span class="ex-cue">Barbell on back or bodyweight</span></td><td>3 × 10 each leg</td><td><span class="add-badge">+5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Hip thrust</span><span class="ex-cue">Shoulders on bench, bar on hips</span></td><td>3 × 12</td><td><span class="add-badge">+5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Calf raise</span><span class="ex-cue">Standing, use squat rack for balance</span></td><td>3 × 15</td><td><span class="add-badge later">Add barbell later</span></td></tr>
+        </tbody></table>
+      </div>
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label wka-fri">Week A — Friday</div><div class="session-title">Strength B — upper body</div><div class="session-meta">~50 mins · at home</div></div>
+        <table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Add when ready</th></tr></thead><tbody>
+          <tr><td><span class="ex-name">Bench press</span><span class="ex-cue">Feet flat, arch natural</span></td><td>4 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Barbell row</span><span class="ex-cue">Hinge 45°, pull to lower chest</span></td><td>4 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Overhead press</span><span class="ex-cue">Standing, bar from front rack</span></td><td>3 × 10</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Barbell curl</span><span class="ex-cue">Elbows pinned, controlled lower</span></td><td>3 × 12</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Skull crusher</span><span class="ex-cue">Bar to forehead on bench</span></td><td>3 × 12</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+
+    <div class="section-label">Swim sessions</div>
+    <div class="sessions-grid">
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Monday — Lunch</div><div class="session-title">Upper body aerobic</div><div class="session-meta">~25 mins · works in 25m or 50m pool</div></div>
+        <div class="swim-block"><div class="swim-block-title">Warm-up</div><div class="swim-block-meta">4 mins</div><div class="swim-set"><div class="swim-dot"></div><span>Easy freestyle — settle in, find your rhythm</span></div></div>
+        <div class="swim-block"><div class="swim-block-title">Main set — repeat 4–5 times</div><div class="swim-block-meta">~18 mins total</div><div class="swim-set"><div class="swim-dot"></div><span>Swim hard — 45 secs</span></div><div class="swim-set"><div class="swim-dot"></div><span>Rest at wall — 20 secs</span></div><div class="swim-set"><div class="swim-dot"></div><span>Swim easy — 45 secs</span></div><div class="swim-set"><div class="swim-dot"></div><span>Rest — 10 secs</span></div><div class="swim-note">Time-based so it works regardless of pool length. Upper body does the work — keep it freestyle.</div></div>
+        <div class="swim-block"><div class="swim-block-title">Cool-down</div><div class="swim-block-meta">3 mins</div><div class="swim-set"><div class="swim-dot"></div><span>Backstroke or very easy freestyle</span></div></div>
+      </div>
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Friday — After Strength B</div><div class="session-title">Active recovery</div><div class="session-meta">~25–30 mins · arms already fatigued</div></div>
+        <div class="swim-block"><div class="swim-block-title">If pool has kickboards</div><div class="swim-set"><div class="swim-dot"></div><span>20 mins easy continuous freestyle</span></div><div class="swim-set"><div class="swim-dot"></div><span>10 mins kick-only with kickboard — legs work, arms rest completely</span></div></div>
+        <div class="swim-block"><div class="swim-block-title">No kickboard</div><div class="swim-set"><div class="swim-dot"></div><span>30 mins breaststroke — kick carries more of the load</span></div><div class="swim-note">You've just done bench, rows and OHP. This is a flush, not a second upper session.</div></div>
+      </div>
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Sunday — Optional</div><div class="session-title">Easy prep</div><div class="session-meta">20–30 mins · genuinely easy</div></div>
+        <div class="swim-block"><div class="swim-set"><div class="swim-dot"></div><span>Relaxed pace — any stroke you enjoy</span></div><div class="swim-set"><div class="swim-dot"></div><span>Mix freestyle and backstroke freely</span></div><div class="swim-note">Treat it like a walk, not a run. Stay loose before the week starts.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WEEK B -->
+  <div id="panel-b" class="week-panel">
+    <div class="week-grid">
+      <div class="day-card"><div class="day-label">Mon</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity swim"><svg><use href="#ic-swim"/></svg>Swim</div><div class="day-note">Lunch swim</div></div>
+      <div class="day-card"><div class="day-label">Tue</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity rest"><svg><use href="#ic-moon"/></svg>Rest eve</div></div>
+      <div class="day-card"><div class="day-label">Wed</div><span class="loc-badge loc-home">home</span><div class="activity strength"><svg><use href="#ic-str"/></svg>Full body</div><div class="activity swim"><svg><use href="#ic-swim"/></svg>Swim</div><div class="day-note">Reduced sets</div></div>
+      <div class="day-card"><div class="day-label">Thu</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity netball"><svg><use href="#ic-net"/></svg>Netball</div><div class="day-note">Big day</div></div>
+      <div class="day-card"><div class="day-label">Fri</div><span class="loc-badge loc-office">office</span><div class="activity bike"><svg><use href="#ic-bike"/></svg>Bike</div><div class="activity rest"><svg><use href="#ic-moon"/></svg>Rest eve</div></div>
+      <div class="day-card"><div class="day-label">Sat</div><span class="loc-badge loc-rest">rest</span><div class="activity rest"><svg><use href="#ic-moon"/></svg>Full recovery</div></div>
+      <div class="day-card"><div class="day-label">Sun</div><span class="loc-badge loc-rest">rest</span><div class="activity swim"><svg><use href="#ic-swim"/></svg>Opt. swim</div><div class="day-note">Easy prep</div></div>
+    </div>
+
+    <div class="section-label">Strength session</div>
+    <div class="sessions-grid" style="grid-template-columns:1fr;">
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label wkb-wed">Week B — Wednesday</div><div class="session-title">Strength — full body</div><div class="session-meta">~55 mins · at home · followed by swim</div></div>
+        <table><thead><tr><th>Exercise</th><th>Sets × reps</th><th>Add when ready</th></tr></thead><tbody>
+          <tr><td><span class="ex-name">Back squat</span><span class="ex-cue">Same as Strength A</span></td><td>3 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Bench press</span><span class="ex-cue">Same as Strength B</span></td><td>3 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Romanian deadlift</span><span class="ex-cue">Same as Strength A</span></td><td>2 × 10</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Barbell row</span><span class="ex-cue">Same as Strength B</span></td><td>3 × 8</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+          <tr><td><span class="ex-name">Overhead press</span><span class="ex-cue">Drop 1 set vs Strength B</span></td><td>2 × 10</td><td><span class="add-badge">+2.5 kg</span></td></tr>
+        </tbody></table>
+        <div class="prog-note"><strong>How to progress:</strong> Complete all sets and reps with good form before adding weight. Add the increment shown above at the next session. If a weight feels too easy from day one, start heavier — these are conservative starting points. Rest 90–120 seconds between compound lifts (squat, bench, row, deadlift), 60 seconds for accessory work (curls, skull crushers, calves).</div>
+      </div>
+    </div>
+
+    <div class="section-label">Swim sessions</div>
+    <div class="sessions-grid">
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Monday — Lunch</div><div class="session-title">Upper body aerobic</div><div class="session-meta">~25 mins · works in 25m or 50m pool</div></div>
+        <div class="swim-block"><div class="swim-block-title">Warm-up — 4 mins</div><div class="swim-set"><div class="swim-dot"></div><span>Easy freestyle — settle in</span></div></div>
+        <div class="swim-block"><div class="swim-block-title">Main set — repeat 4–5 times (~18 mins)</div><div class="swim-set"><div class="swim-dot"></div><span>Hard 45s → rest 20s → easy 45s → rest 10s</span></div><div class="swim-note">Time-based so pool length doesn't matter.</div></div>
+        <div class="swim-block"><div class="swim-block-title">Cool-down — 3 mins</div><div class="swim-set"><div class="swim-dot"></div><span>Backstroke or very easy freestyle</span></div></div>
+      </div>
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Wednesday — After Full Body</div><div class="session-title">Flush &amp; recover</div><div class="session-meta">~20–25 mins · genuinely easy</div></div>
+        <div class="swim-block"><div class="swim-set"><div class="swim-dot"></div><span>Easy continuous swimming — any stroke</span></div><div class="swim-set"><div class="swim-dot"></div><span>Backstroke is ideal — opens chest and shoulders after pressing</span></div><div class="swim-note">No intervals, no targets. This is a flush, not a session.</div></div>
+      </div>
+      <div class="session-card">
+        <div class="session-header"><div class="session-week-label swim-col">Sunday — Optional</div><div class="session-title">Easy prep</div><div class="session-meta">20–30 mins · genuinely easy</div></div>
+        <div class="swim-block"><div class="swim-set"><div class="swim-dot"></div><span>Relaxed pace — any stroke you enjoy</span></div><div class="swim-set"><div class="swim-dot"></div><span>Mix freestyle and backstroke freely</span></div><div class="swim-note">Treat it like a walk, not a run. Stay loose before the week starts.</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ MOBILITY PANEL ═══════════════════ -->
+<div id="main-mobility" class="main-panel">
+
+  <div class="mob-grid">
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon morning">☀️</div>
+        <div><div class="mob-title">Morning — before the commute</div><div class="mob-meta">~5 mins · wait 20–30 mins after waking first</div></div>
+      </div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Hip flexor stretch</div><div class="mob-detail">Lunge position, tuck pelvis under. Deep pull at front of hip and lower abdomen.</div></div><div class="mob-time">30–45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Deadman hang</div><div class="mob-detail">Arms fully extended, let shoulders rise passively. Slow exhales. Feet on floor is fine.</div></div><div class="mob-time">4–5 × 20–30s</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Chest opener</div><div class="mob-detail">Clasp hands behind back, squeeze shoulder blades together and lift slightly.</div></div><div class="mob-time">20–30s × 2</div></div>
+      <div class="mob-note">Don't hang immediately after waking — discs are still rehydrated from sleep. Move around first.</div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon postcycle">🚲</div>
+        <div><div class="mob-title">Post-cycle — before you sit down</div><div class="mob-meta">~3 mins · highest value stretching window of the day</div></div>
+      </div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Hip flexor stretch</div><div class="mob-detail">Most important one here. 35 mins on the bike = 35 mins of shortening. Don't let it lock in.</div></div><div class="mob-time">45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Figure-four</div><div class="mob-detail">Cross ankle over opposite knee, sit tall and lean forward slightly. Glutes and outer hip.</div></div><div class="mob-time">30s each side</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Calf stretch</div><div class="mob-detail">Hands on wall, one foot back, heel flat to the ground.</div></div><div class="mob-time">20s each side</div></div>
+      <div class="mob-note">Muscles are warm here — do this before you sit down, every commute day.</div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon preeve">🏢</div>
+        <div><div class="mob-title">Pre-evening cycle — before you leave</div><div class="mob-meta">~3 mins · counteracts a day of sitting</div></div>
+      </div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Hip flexor stretch</div><div class="mob-detail">You've been sitting for hours — these are tight again. Open them before loading them on the bike.</div></div><div class="mob-time">30–45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Thoracic rotation</div><div class="mob-detail">Hands behind head, rotate torso each side. Opens the mid-back after a day at the desk.</div></div><div class="mob-time">5 reps each side</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Leg swings</div><div class="mob-detail">Hold a wall, swing each leg front-to-back then side-to-side. Warms the hip dynamically.</div></div><div class="mob-time">10 each direction</div></div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon homeeve">🏠</div>
+        <div><div class="mob-title">Home — evening wind-down</div><div class="mob-meta">~5–8 mins · on the floor in front of the TV</div></div>
+      </div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Hip flexor stretch</div><div class="mob-detail">Third time today on office days — still worth it every time given the cycling and sitting.</div></div><div class="mob-time">45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Figure-four on the floor</div><div class="mob-detail">Lie on your back, cross one ankle over the opposite knee, pull both legs toward your chest.</div></div><div class="mob-time">45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Child's pose</div><div class="mob-detail">Knees wide, arms extended, forehead down. Decompresses lower back and opens hips simultaneously.</div></div><div class="mob-time">60s</div></div>
+      <div class="mob-item"><div class="mob-num">4</div><div class="mob-body"><div class="mob-name">Spinal twist (floor)</div><div class="mob-detail">On your back, bring one knee across the body, arms out wide. Gently rotates the thoracic spine.</div></div><div class="mob-time">45s each side</div></div>
+      <div class="mob-note">Do this on the floor while watching something. It doesn't need to feel like exercise.</div>
+    </div>
+
+  </div>
+
+  <div class="mob-grid">
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon strength">🏋️</div>
+        <div><div class="mob-title">Strength sessions — pre and post</div><div class="mob-meta">Pre: ~5 mins · Post: ~5 mins</div></div>
+      </div>
+      <div class="mob-divider">Before — warm up, don't stretch cold</div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Bodyweight squats</div><div class="mob-detail">Slow and controlled, full depth. Primes hips, knees and ankles before loading.</div></div><div class="mob-time">2 × 10</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Arm circles + shoulder rolls</div><div class="mob-detail">Big slow circles forward and back. Warms the shoulder joint before pressing or rowing.</div></div><div class="mob-time">10 each way</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Hip circles</div><div class="mob-detail">Hands on hips, slow big rotations. Opens the hip before squatting or hinging.</div></div><div class="mob-time">10 each way</div></div>
+      <div class="mob-divider">After — now you can hold stretches</div>
+      <div class="mob-item"><div class="mob-num">4</div><div class="mob-body"><div class="mob-name">Hip flexor stretch</div><div class="mob-detail">Especially important after squats and deadlifts.</div></div><div class="mob-time">45s each side</div></div>
+      <div class="mob-item"><div class="mob-num">5</div><div class="mob-body"><div class="mob-name">Doorframe chest stretch</div><div class="mob-detail">Arms at 90°, lean through a doorframe. Essential after any pressing session.</div></div><div class="mob-time">30s × 2</div></div>
+      <div class="mob-item"><div class="mob-num">6</div><div class="mob-body"><div class="mob-name">Standing quad stretch</div><div class="mob-detail">Hold foot behind you, stand tall. After lower body days especially.</div></div><div class="mob-time">30s each side</div></div>
+    </div>
+
+    <div class="mob-card">
+      <div class="mob-header">
+        <div class="mob-icon desk">💻</div>
+        <div><div class="mob-title">Throughout the day — at the desk</div><div class="mob-meta">Every 60–90 mins · no one will notice</div></div>
+      </div>
+      <div class="mob-item"><div class="mob-num">1</div><div class="mob-body"><div class="mob-name">Seated figure-four</div><div class="mob-detail">Cross ankle over knee, sit tall, lean forward slightly. Single most useful desk stretch.</div></div><div class="mob-time">30s each side</div></div>
+      <div class="mob-item"><div class="mob-num">2</div><div class="mob-body"><div class="mob-name">Neck rolls</div><div class="mob-detail">Drop one ear to shoulder, hold, then slowly roll to the other side.</div></div><div class="mob-time">20s each side</div></div>
+      <div class="mob-item"><div class="mob-num">3</div><div class="mob-body"><div class="mob-name">Seated spinal twist</div><div class="mob-detail">Sit upright, rotate torso, rest hand on back of chair. Counteracts forward desk posture.</div></div><div class="mob-time">20–30s each side</div></div>
+      <div class="mob-item"><div class="mob-num">4</div><div class="mob-body"><div class="mob-name">Chest opener</div><div class="mob-detail">Clasp hands behind back, squeeze shoulder blades. Undoes the hunch from typing.</div></div><div class="mob-time">20s × 2</div></div>
+      <div class="mob-item"><div class="mob-num">5</div><div class="mob-body"><div class="mob-name">Stand up and walk</div><div class="mob-detail">Even 2 minutes breaks the compression cycle. Water, bathroom, anything works.</div></div><div class="mob-time">Every hour</div></div>
+      <div class="mob-note">Set a phone reminder if you need it. Never sit for more than 90 minutes unbroken.</div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function showMain(id, btn) {
+    document.querySelectorAll('.main-panel').forEach(function(p) { p.classList.remove('visible'); });
+    document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('main-' + id).classList.add('visible');
+    btn.classList.add('active');
+  }
+  function showWeek(w, btn) {
+    document.querySelectorAll('.week-panel').forEach(function(p) { p.classList.remove('visible'); });
+    document.querySelectorAll('.wk-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('panel-' + w).classList.add('visible');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
